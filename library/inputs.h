@@ -5,7 +5,8 @@
 enum InputType
 {
 	IN_WEBCAM,
-	IN_IMAGE
+	IN_IMAGE,
+	IN_VIDEO,
 };
 
 int configure_input(struct liveStream *ctx,const char *name,enum InputType type);

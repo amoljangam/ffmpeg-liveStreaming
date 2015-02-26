@@ -55,6 +55,10 @@ int configure_input(struct liveStream *ctx,const char *name,enum InputType type)
 	{
 		fmt = CAM_DRIVER;
 	}
+	else if ( IN_VIDEO == type )
+	{
+		fmt = NULL; 
+	}
 	ret = init_decoder(&ic,name,fmt);
 	if(ret < 0)
 	{

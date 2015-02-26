@@ -23,7 +23,6 @@ void init_ffmpeg(void)
 	avformat_network_init();
 }
 
-
 /* Add an output stream. */
 static AVStream *add_webcam_stream(struct liveStream *ctx, AVCodec **codec, enum AVCodecID codec_id)
 {
@@ -246,6 +245,73 @@ EXPORT void stop_capture(void *actx)
 	}
 }
 
+EXPORT void* stream_video(const char*path,const char*outpath)
+{
+	int ret=0;
+	struct liveStream *ctx = NULL;
+	AVStream *stream = NULL;
+
+	ctx = malloc(sizeof(struct liveStream));
+	if(ctx == NULL)
+	{
+		fprintf(stderr,"Error in video play struct alloc\n");
+		return NULL;
+	}
+	memset(ctx, 0,sizeof(*ctx));
+	init_ffmpeg();
+
+	ret = configure_input(ctx, path, IN_VIDEO);
+	if (ret < 0)
+        {
+        	fprintf(stderr, "Error while configuring Input Video File %s\n",path);
+		goto end;
+	}
+
+	stream = ctx->inputs[0].st;
+
+        if(stream->avg_frame_rate.num && stream->avg_frame_rate.den)
+        {
+                ctx->video_avg_frame_rate.num = stream->avg_frame_rate.num;
+                ctx->video_avg_frame_rate.den = stream->avg_frame_rate.den;
+        }
+        else if(stream->r_frame_rate.num && stream->r_frame_rate.den )
+        {
+                ctx->video_avg_frame_rate.num = stream->r_frame_rate.num;
+                ctx->video_avg_frame_rate.den = stream->r_frame_rate.den;
+        }
+        else
+        {
+                fprintf(stderr, "Unable to take out fps from video assuming 30fps\n");
+                ctx->video_avg_frame_rate.num = 30;
+                ctx->video_avg_frame_rate.den = 1;
+
+        }
+
+        ret = init_filters(ctx);
+        if(ret < 0)
+        {
+                fprintf(stderr,"unable to initialize filter\n");
+                goto end;
+        }
+	
+        ret = init_encoder(ctx, outpath);
+        if(ret < 0)
+        {
+                printf("Error in encoder init for %s\n",path);
+                ret =-1;
+                goto end;
+        }
+
+        ctx->OutFrame = av_frame_alloc();
+end:
+        if(ret < 0)
+        {
+                stop_capture((void*)ctx);
+                return NULL;
+        }
+        return ctx;
+}
+
 EXPORT void *init_capture(const char*path)
 {
 
@@ -281,7 +347,6 @@ EXPORT void *init_capture(const char*path)
 		ret = configure_input(ctx, fname, IN_WEBCAM);
 		if (ret < 0)
 		{
-			ret = -1;
 			fprintf(stderr, "Error while configuring Input %s\n",fname);
 		}
 		else

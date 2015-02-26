@@ -24,6 +24,7 @@ int init_decoder(AVFormatContext **pFormatCtx,const char *fname,char *fmt)
 
 	// allocate contex
 	*pFormatCtx = avformat_alloc_context();
+	
 	if(*pFormatCtx == NULL)
 	{
 		fprintf(stderr,"could not allocate avformat\n");
@@ -46,13 +47,14 @@ int init_decoder(AVFormatContext **pFormatCtx,const char *fname,char *fmt)
 		fprintf(stderr,"Error in finding stream infon");
 		return -13;
 	}
-
+	
 	ret = av_find_best_stream(*pFormatCtx,AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0); 
 	if (ret < 0)
 	{
 		fprintf(stderr, "Could not find video stream in camera\n");
 		return ret;
 	}
+	av_dump_format(*pFormatCtx, 0, "Input", 0);
 	st = (*pFormatCtx)->streams[ret];
 	dec_ctx = st->codec;
 	dec = avcodec_find_decoder(dec_ctx->codec_id);

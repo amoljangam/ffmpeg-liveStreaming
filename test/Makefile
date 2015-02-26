@@ -1,5 +1,5 @@
 
-CXXFLAGS=-g -I../library/
+CXXFLAGS=-g -I../library/ 
 LDFLAGS= -pthread
 SRC= test.cpp
 
